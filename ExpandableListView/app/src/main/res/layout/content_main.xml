@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="cc.ncu.edu.tw.expandablelistview.MainActivity"
+    tools:showIn="@layout/activity_main"
+    android:weightSum="1">
+
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/txtResult" />
+
+    <ExpandableListView
+        android:layout_width="346dp"
+        android:layout_height="433dp"
+        android:id="@id/android:list" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right"
+        android:background="#808069">
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:id="@+id/createProject"
+            android:src="@drawable/create_button"
+            android:layout_toStartOf="@+id/deleteProject"
+            android:layout_toLeftOf="@+id/deleteProject"/>
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:id="@+id/deleteProject"
+            android:src="@drawable/delete_button"
+            android:layout_alignParentTop="true"
+            android:layout_toLeftOf="@+id/editProject"
+            android:layout_toStartOf="@+id/editProject" />
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:id="@+id/editProject"
+            android:src="@drawable/edit_button"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginRight="81dp"
+            android:layout_marginEnd="81dp" />
+
+
+    </RelativeLayout>
+
+
+</LinearLayout>
