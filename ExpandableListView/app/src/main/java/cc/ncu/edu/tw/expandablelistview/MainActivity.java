@@ -6,8 +6,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.support.v7.app.AppCompatDelegate;
+import android.view.ContextMenu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -16,8 +18,11 @@ import android.widget.EditText;
 import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.ImageButton;
+import android.widget.SearchView;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
+
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,23 +30,31 @@ import java.util.List;
 import java.util.Map;
 
 public class MainActivity extends ExpandableListActivity {
+    private AppCompatDelegate mDelegate; //建造AppCompat class中的取的actionbar的方法
 
     private static final String ITEM_NAME = "Item Name";
     private static final String ITEM_SUBNAME = "Item Subname";
     private ExpandableListAdapter mExpaListAdap;
 
-
+    //影像按鈕元件
     private ImageButton mcreateProject;
     private ImageButton mdeleteProject;
     private ImageButton meditProject;
     private Dialog mDlgCreateProject;
     private TextView mTxtResult;
 
+    private ExpandableListView mExpandableListView; //註冊使用Context Menu的元件
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        getDelegate().installViewFactory();
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        getDelegate().onCreate(savedInstanceState);
+        getDelegate().setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionbar(toolbar);
+
 
         mcreateProject=(ImageButton)findViewById(R.id.createProject);
         mdeleteProject=(ImageButton)findViewById(R.id.deleteProject);
@@ -51,6 +64,11 @@ public class MainActivity extends ExpandableListActivity {
         mcreateProject.setOnClickListener(imgbtnCreateProject);
         mdeleteProject.setOnClickListener(imgbtnDeleteProject);
         meditProject.setOnClickListener(imgbtnEditProject);
+
+        //註冊使用Context Menu的元件
+        mExpandableListView = getExpandableListView();
+        registerForContextMenu(mExpandableListView);
+
 
         List<Map<String,String>> groupList = new ArrayList<Map<String,String>>();
         List<List<Map<String,String>>> childList2D = new ArrayList<List<Map<String,String>>>();
@@ -93,6 +111,78 @@ public class MainActivity extends ExpandableListActivity {
         });
     }
 
+
+
+    //
+    private AppCompatDelegate getDelegate() {
+        if (mDelegate == null) {
+            mDelegate = AppCompatDelegate.create(this, null);
+        }
+        return mDelegate;
+    }
+
+    //
+    public void setSupportActionbar(Toolbar toolbar) {
+        getDelegate().setSupportActionBar(toolbar);
+    }
+
+
+
+
+    //=============================================================================================//
+    @Override
+    //發生"長按"情況,系統呼叫此方法建立Context Menu,並顯示在畫面上
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        if(v==mExpandableListView){
+            if(menu.size()==0){
+                MenuInflater inflater = getMenuInflater();
+                inflater.inflate(R.menu.context_menu_expandable_listview,menu);
+            }
+        }
+    }
+
+
+    //按下Context Menu選單中按鈕執行的事情
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        onOptionsItemSelected(item);
+        return super.onContextItemSelected(item);
+    }
+
+    @Override
+
+    //按下Context Menu選單按鈕後執行對應的事情
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        switch (item.getItemId()){
+            case R.id.menuItemEdit:
+                String edit="";
+                edit+="你按下了編輯步驟";
+                mTxtResult.setText(edit);
+            break;
+
+            case R.id.menuItemDelete:
+                String delete="";
+                delete+="你按下了編輯步驟";
+                mTxtResult.setText(delete);
+                break;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+
+
+    //=============================================================================================//
     //設定當按下createProject圖示按鈕顯示的Dialog對話框
     private View.OnClickListener imgbtnCreateProject = new View.OnClickListener(){
         @Override
@@ -133,7 +223,7 @@ public class MainActivity extends ExpandableListActivity {
 
 
 
-
+    //=============================================================================================//
     //設定當按下deleteProject圖示按鈕顯示的Dialog對話框
     private View.OnClickListener imgbtnDeleteProject = new View.OnClickListener() {
         @Override
@@ -169,6 +259,7 @@ public class MainActivity extends ExpandableListActivity {
 
 
 
+    //=============================================================================================//
     //設定當按下editProject圖示按鈕顯示的Dialog對話框
     private View.OnClickListener imgbtnEditProject = new View.OnClickListener() {
         @Override
@@ -208,18 +299,8 @@ public class MainActivity extends ExpandableListActivity {
 
 
 
-
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-
-
-    //判斷選到選單中哪個選項
+    //=============================================================================================//
+    //判斷選到ExpandableListView選單中哪個選項
     public boolean onChildClick(ExpandableListView parent, View v,
                                 int groupPosition, int childPosition, long id) {
         // TODO Auto-generated method stub
@@ -244,19 +325,28 @@ public class MainActivity extends ExpandableListActivity {
     }
 
 
-
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+    //設定Action View(收尋功能)的事件listener
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_action_bar, menu);
+        SearchView searchView = (SearchView)menu.findItem(R.id.menuItemSearch).getActionView();
+        searchView.setOnQueryTextListener(searchViewOnQueryTextLis);
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
+        return true;
     }
+
+    private SearchView.OnQueryTextListener searchViewOnQueryTextLis = new SearchView.OnQueryTextListener(){
+      public boolean onQueryTextChange(String newText){
+          return false;
+      }
+
+      public boolean onQueryTextSubmit(String query){
+          Toast.makeText(MainActivity.this,query,Toast.LENGTH_LONG).show();
+          return true;
+      }
+    };
+
+
+
 }

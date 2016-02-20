@@ -23,7 +23,7 @@
     <ExpandableListView
         android:layout_width="346dp"
         android:layout_height="433dp"
-        android:id="@id/android:list" />
+        android:id="@id/android:list"/>
 
     <RelativeLayout
         android:layout_width="match_parent"
