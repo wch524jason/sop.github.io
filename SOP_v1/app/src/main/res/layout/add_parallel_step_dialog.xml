@@ -6,52 +6,50 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="步驟名稱:"/>
+        android:text="平行步驟1:"/>
 
     <EditText
-        android:id="@+id/edtStepName"
+        android:id="@+id/edtParallelStep1Name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="步驟說明:"/>
+        android:text="平行步驟2:"/>
 
     <EditText
-        android:id="@+id/edtStepExam"
+        android:id="@+id/edtParallelStep2Name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="承辦單位:"/>
+        android:text="平行步驟3:"/>
 
     <EditText
-        android:id="@+id/edtUnit"
+        android:id="@+id/edtParallelStep3Name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="承辦人員:"/>
+        android:text="平行步驟4:"/>
 
     <EditText
-        android:id="@+id/edtPeople"
+        android:id="@+id/edtParallelStep4Name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="地點:"/>
+        android:text="平行步驟5:"/>
 
     <EditText
-        android:id="@+id/edtPlace"
+        android:id="@+id/edtParallelStep5Name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
-
-
 </LinearLayout>

@@ -9,7 +9,6 @@ import android.widget.TextView;
  */
 public class MyView {
     public TextView title;
-    public ImageButton add;
     public ImageButton delete;
     public ImageButton edit;
     public ImageButton cpy;

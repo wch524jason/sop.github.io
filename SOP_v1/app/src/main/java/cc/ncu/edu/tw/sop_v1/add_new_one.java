@@ -1,6 +1,5 @@
 package cc.ncu.edu.tw.sop_v1;
 
-import android.app.Dialog;
 import android.app.ExpandableListActivity;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -18,13 +17,10 @@ import android.view.LayoutInflater;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
-import android.widget.ImageView;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.Toast;
 
@@ -33,151 +29,110 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class borrowspace extends ExpandableListActivity
+public class add_new_one extends ExpandableListActivity
 {
+    //建造AppCompat class中的取的actionbar的方法,為了解決繼承ExpandableListActivity不能使用setSupportActionbar()
+    private AppCompatDelegate mDelegate;
+
+    private MainActivity mainActivity = new MainActivity();
+
     //增加ExpandableListView的參數key值
     private static final String ITEM_NAME = "Item Name";
     private static final String ITEM_SUBNAME = "Item Subname";
     private static final String ITEM_LOGO = "Item Logo";
 
-    private int parentCount=3;
-    private int itemCount=6;//個數為實體化e的個數
-    private int index=5;//目前被實體化Step的索引
+    private int parentCount=0;
+    private int StepCount=0;//個數為實體化e的個數
+    private int index=0;//目前被實體化Step的索引
+
     private Step[] e = new Step[30];
 
     private ExpandableListAdapter mExpaListAdap;
     private ExpandableListView mExpaListView;
     private Context mContext;
 
-    //建造AppCompat class中的取的actionbar的方法,為了解決繼承ExpandableListActivity不能使用setSupportActionbar()
-    private AppCompatDelegate mDelegate;
+    //執行時存入的list
+    private  List<Map<String,Object>> groupList = new ArrayList<>();
+    private  List<List<Map<String,String>>> childList2D = new ArrayList<>();
 
-    private Dialog addDlg;
-    List<Map<String,Object>> groupList = new ArrayList<>();
-    List<List<Map<String,String>>> childList2D = new ArrayList<>();
+    private static Bundle bundle;
 
     //紀錄  長按按到的groupPosition、childPosition
     private int groupPosition;
     private int childPosition;
 
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
+        //初始化groupList  child2DList
+        groupList.clear();
+        childList2D.clear();
+
         getDelegate().installViewFactory();
         getDelegate().onCreate(savedInstanceState);
-        getDelegate().setContentView(R.layout.activity_borrowspace);
+        getDelegate().setContentView(R.layout.activity_add_new_one);
         super.onCreate(savedInstanceState);
+
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionbar(toolbar);
 
-        //初始化ExpandableListView中的物件
-        e[0] = new Step(true, 1, 0, "登記申請");
-        e[1] = new Step(false, 1, 1, "抽籤");
-        e[2] = new Step(false, 1, 2, "排隊");
-        e[3] = new Step(true, 2, 0, "繳交費用");
-        e[4] = new Step(false, 2, 1, "ATM");
-        e[5] = new Step(true, 3, 0, "場地復原歸還");
-        //e[6] = new Step(false, 3, 1, "123");
-        //e[7] = new Step(true,4,0,"234");
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener()
-        {
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab_add_new_one);
+        fab.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view)
-            {
+            public void onClick(View view) {
 
-                    final View dialogLayout = LayoutInflater.from(borrowspace.this).inflate(R.layout.add_step_dialog, null);
-                    AlertDialog.Builder builder = new AlertDialog.Builder(borrowspace.this);
-                    builder.setTitle("新增步驟");
-                    builder.setView(dialogLayout);
-                    builder.setCancelable(false);
+                final View dialogLayout = LayoutInflater.from(add_new_one.this).inflate(R.layout.add_step_dialog, null);
+                AlertDialog.Builder builder = new AlertDialog.Builder(add_new_one.this);
+                builder.setTitle("新增步驟");
+                builder.setView(dialogLayout);
+                builder.setCancelable(false);
 
-                    builder.setPositiveButton("確定", new DialogInterface.OnClickListener()
-                    {
-                        public void onClick(DialogInterface dialog, int id)
-                        {
-                            EditText mEdtStepName =(EditText) ((AlertDialog) dialog).findViewById(R.id.edtStepName);
-                            EditText mEdtStepExam = (EditText) ((AlertDialog) dialog).findViewById(R.id.edtStepExam);
-                            EditText mEdtUnit = (EditText) ((AlertDialog) dialog).findViewById(R.id.edtUnit);
-                            EditText mEdtPeople = (EditText) ((AlertDialog) dialog).findViewById(R.id.edtPeople);
-                            EditText mEdtPlace = (EditText) ((AlertDialog) dialog).findViewById(R.id.edtPlace);
+                builder.setPositiveButton("確定", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        EditText mEdtStepName = (EditText) ((AlertDialog) dialog).findViewById(R.id.edtStepName);
+                        EditText mEdtStepExam = (EditText) ((AlertDialog) dialog).findViewById(R.id.edtStepExam);
+                        EditText mEdtUnit = (EditText) ((AlertDialog) dialog).findViewById(R.id.edtUnit);
+                        EditText mEdtPeople = (EditText) ((AlertDialog) dialog).findViewById(R.id.edtPeople);
+                        EditText mEdtPlace = (EditText) ((AlertDialog) dialog).findViewById(R.id.edtPlace);
 
-                            itemCount++;
-                            index++;
-                            e[index] = new Step(true, groupList.size()+1, 0, mEdtStepName.getText().toString());
-                            e[index].setContent(mEdtStepExam.getText().toString(),mEdtUnit.getText().toString(),mEdtPeople.getText().toString(),mEdtPlace.getText().toString());
+                        //Toast.makeText(add_new_one.this,"成功新增了步驟", Toast.LENGTH_LONG).show();
+                        StepCount++;
+                        parentCount ++;
 
-                            Map<String, Object> group = new HashMap<>();
-                            group.put(ITEM_NAME, mEdtStepName.getText().toString());
-                            groupList.add(group);
+                        e[index] = new Step(true, groupList.size() + 1, 0, mEdtStepName.getText().toString());
+                        e[index].setContent(mEdtStepExam.getText().toString(), mEdtUnit.getText().toString(), mEdtPeople.getText().toString(), mEdtPlace.getText().toString());
+                        index++;
 
-                            List<Map<String, String>> childList = new ArrayList<>();
+                        Map<String, Object> group = new HashMap<>();
+                        group.put(ITEM_NAME, mEdtStepName.getText().toString());
+                        groupList.add(group);
 
-                            childList2D.add(childList);
+                        List<Map<String, String>> childList = new ArrayList<>();
 
-                            //設定ExpandableListAdapter
-                            mExpaListAdap = new SimpleExpandableListAdapter(borrowspace.this, groupList, android.R.layout.simple_expandable_list_item_2, new String[]{ITEM_NAME}
-                                    , new int[]{android.R.id.text1}, childList2D, android.R.layout.simple_expandable_list_item_2, new String[]{ITEM_SUBNAME},
-                                    new int[]{android.R.id.text1});
-                            mExpaListView.setAdapter(mExpaListAdap);
-                        }
-                    });
+                        childList2D.add(childList);
 
-                    builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id)
-                        {
+                        //設定ExpandableListAdapter
+                        mExpaListAdap = new SimpleExpandableListAdapter(add_new_one.this, groupList, android.R.layout.simple_expandable_list_item_2, new String[]{ITEM_NAME}
+                                , new int[]{android.R.id.text1}, childList2D, android.R.layout.simple_expandable_list_item_2, new String[]{ITEM_SUBNAME},
+                                new int[]{android.R.id.text1});
+                        mExpaListView.setAdapter(mExpaListAdap);
+                    }
+                });
 
-                        }
-                    });
+                builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
 
-                    AlertDialog alert = builder.create();
-                    alert.show();
+                    }
+                });
 
-
+                AlertDialog alert = builder.create();
+                alert.show();
             }
         });
 
 
-
-
-
-        //載入ExpandableListView選單的文字
-        int i=0;
-        while(i<itemCount)
-        {
-            Map<String, Object> group = new HashMap<>();
-
-            int j = i;
-            //ExpandableListView第一層
-            if (e[i].getSequence() == 0)
-            {
-                group.put(ITEM_NAME, e[i].getContent());
-                groupList.add(group);
-            }
-
-            //ExpandableListView第二層
-            List<Map<String, String>> childList = new ArrayList<>();
-            if(j+1<itemCount)
-            {
-                while (e[j].getLayer() == e[j + 1].getLayer())
-                {
-                    Map<String, String> child = new HashMap<>();
-                    child.put(ITEM_SUBNAME, e[j + 1].getContent());
-                    childList.add(child);
-                    j++;
-
-                    if(j+1==itemCount)
-                        break;
-                }
-            }
-
-            childList2D.add(childList);
-            i=j+1;
-        }
 
         //繼承ExpandableListView後id為固定android:list所以用getExpandableListView取得id
         mExpaListView = getExpandableListView();
@@ -185,22 +140,115 @@ public class borrowspace extends ExpandableListActivity
         registerForContextMenu(mExpaListView);
 
 
-            //設定ExpandableListAdapter
-            mExpaListAdap = new SimpleExpandableListAdapter(borrowspace.this, groupList, android.R.layout.simple_expandable_list_item_2, new String[]{ITEM_NAME}
-                    , new int[]{android.R.id.text1}, childList2D, android.R.layout.simple_expandable_list_item_2, new String[]{ITEM_SUBNAME},
-                    new int[]{android.R.id.text1});
+        //設定ExpandableListAdapter
+        mExpaListAdap = new SimpleExpandableListAdapter(add_new_one.this, groupList, android.R.layout.simple_expandable_list_item_2, new String[]{ITEM_NAME}
+                , new int[]{android.R.id.text1}, childList2D, android.R.layout.simple_expandable_list_item_2, new String[]{ITEM_SUBNAME},
+                new int[]{android.R.id.text1});
 
-            mExpaListView.setAdapter(mExpaListAdap);
-            mContext = borrowspace.this;
+        mExpaListView.setAdapter(mExpaListAdap);
+        mContext = add_new_one.this;
 
         //設判斷長按父層或子層的監聽器
         mExpaListView.setOnItemLongClickListener(expandListViewOnItemLongClick);
 
     }
 
+/*
+    //紀錄編輯到一半的步驟內容
+    protected void onPause()
+    {
+        Bundle outState = new Bundle();
+        super.onPause();
+        ArrayList bundlegrouplist = new ArrayList();
+        ArrayList bundlechildList2D = new ArrayList();
+
+        bundlegrouplist.add(groupList);
+        bundlechildList2D.add(childList2D);
+
+        //儲存UI狀態到bundle中
+        outState.putParcelableArrayList("GROUPLIST", bundlegrouplist);
+        outState.putParcelableArrayList("CHILDLIST2D", bundlechildList2D);
+
+        setBundle(outState);
+
+        Log.v("這是在測試onPause", "成功了~~~");
+
+    }
+
+    protected  void setBundle(Bundle b)
+    {
+        bundle =b;
+    }
+
+    protected  Bundle getBundle()
+    {
+        return bundle;
+    }
+*/
+
+/*
+    protected void onSaveInstanceState(Bundle outState)
+    {
+        super.onSaveInstanceState(outState);
+        ArrayList bundlegrouplist = new ArrayList();
+        ArrayList bundlechildList2D = new ArrayList();
+
+        bundlegrouplist.add(groupList);
+        bundlechildList2D.add(childList2D);
+
+        //儲存UI狀態到bundle中
+        outState.putParcelableArrayList("GROUPLIST", bundlegrouplist);
+        outState.putParcelableArrayList("CHILDLIST2D", bundlechildList2D);
+
+        Log.v("onSaveInstanceState被執行了","成功了~~~");
+    }
+*/
+
+/*
+    protected void onRestoreInstanceState(Bundle savedInstanceState)
+    {
+        super.onRestoreInstanceState(savedInstanceState);
+
+        ArrayList bundlegrouplist = savedInstanceState.getParcelableArrayList("GROUPLIST");
+        ArrayList bundlechildList2D = savedInstanceState.getParcelableArrayList("CHILDLIST2D");
+
+        List<Map<String, Object>> groupList= (List<Map<String, Object>>)bundlegrouplist.get(0);
+        List<List<Map<String,String>>> childList2D =(List<List<Map<String,String>>>)bundlechildList2D.get(0);
+
+        //設定ExpandableListAdapter
+        mExpaListAdap = new SimpleExpandableListAdapter(add_new_one.this, groupList, android.R.layout.simple_expandable_list_item_2, new String[]{ITEM_NAME}
+                , new int[]{android.R.id.text1}, childList2D, android.R.layout.simple_expandable_list_item_2, new String[]{ITEM_SUBNAME},
+                new int[]{android.R.id.text1});
+
+        mExpaListView.setAdapter(mExpaListAdap);
+
+        Log.v("onRestoreInstance被執行了", "成功了~~~");
+    }
+*/
 
 
+/*
+    //重啟Activity時載入介面
+    protected void onStart()
+    {
+        Bundle savedInstanceState = getBundle();
+        super.onStart();
+        ArrayList bundlegrouplist = savedInstanceState.getParcelableArrayList("GROUPLIST");
+        ArrayList bundlechildList2D = savedInstanceState.getParcelableArrayList("CHILDLIST2D");
 
+        groupList= (List<Map<String, Object>>)bundlegrouplist;
+        childList2D =(List<List<Map<String,String>>>)bundlechildList2D;
+
+
+        //設定ExpandableListAdapter
+        mExpaListAdap = new SimpleExpandableListAdapter(add_new_one.this, groupList, android.R.layout.simple_expandable_list_item_2, new String[]{ITEM_NAME}
+                , new int[]{android.R.id.text1}, childList2D, android.R.layout.simple_expandable_list_item_2, new String[]{ITEM_SUBNAME},
+                new int[]{android.R.id.text1});
+        mExpaListView.setAdapter(mExpaListAdap);
+
+        Log.v("這是在測試onStart","成功了~~~");
+    }
+*/
 
     //判斷選到ExpandableListView選單中哪個選項(短按)
     public boolean onChildClick(ExpandableListView parent, View v,
@@ -210,26 +258,28 @@ public class borrowspace extends ExpandableListActivity
 
         switch(groupPosition)
         {
-            case 0:
+            default:
                 switch(childPosition)
                 {
-                    case 0:
-                        Intent it = new Intent();
-                        it.setClass(this, ballot.class);
-                        startActivity(it);
-                        break;
                     /*
-                                         case 1:
-                                        Intent it2 = new Intent();
-                                        it2.setClass(MainActivity.this, drawer.class);
-                                        startActivity(it2);
+                                         case 0:
+                                        Intent it = new Intent();
+                                         it.setClass(this, ballot.class);
+                                        startActivity(it);
                                         break;
                                         */
+                    default:
+                        Intent it = new Intent();
+                        it.setClass(add_new_one.this,DetailStepActivity.class);
+                        startActivity(it);
+                        break;
                 }
                 break;
         }
         return super.onChildClick(parent, v, groupPosition, childPosition, id);
     }
+
+
 
     //發生"長按"情況,系統呼叫此方法建立Context Menu,並顯示在畫面上
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo)
@@ -245,6 +295,8 @@ public class borrowspace extends ExpandableListActivity
         }
     }
 
+
+
     //判斷使用者點選Context Menu中的項目,執行對應的工作
     public boolean onContextItemSelected(MenuItem item)
     {
@@ -252,13 +304,14 @@ public class borrowspace extends ExpandableListActivity
         switch (id)
         {
             case R.id.contextMenuItemAddCommon:
-                final View addCommonStepLayout = LayoutInflater.from(borrowspace.this).inflate(R.layout.add_step_dialog, null);
-                AlertDialog.Builder builder = new AlertDialog.Builder(borrowspace.this);
+                final View addCommonStepLayout = LayoutInflater.from(add_new_one.this).inflate(R.layout.add_step_dialog, null);
+                AlertDialog.Builder builder = new AlertDialog.Builder(add_new_one.this);
                 builder.setTitle("新增一般步驟");
                 builder.setView(addCommonStepLayout);
                 builder.setCancelable(false);
 
-                builder.setPositiveButton("確定", new DialogInterface.OnClickListener() {
+                builder.setPositiveButton("確定", new DialogInterface.OnClickListener()
+                {
                     public void onClick(DialogInterface dialog, int id) {
                         EditText mEdtStepName = (EditText) ((AlertDialog) dialog).findViewById(R.id.edtStepName);
                         EditText mEdtStepExam = (EditText) ((AlertDialog) dialog).findViewById(R.id.edtStepExam);
@@ -266,19 +319,21 @@ public class borrowspace extends ExpandableListActivity
                         EditText mEdtPeople = (EditText) ((AlertDialog) dialog).findViewById(R.id.edtPeople);
                         EditText mEdtPlace = (EditText) ((AlertDialog) dialog).findViewById(R.id.edtPlace);
 
-                        itemCount++;
-                        index++;
+
                         e[index] = new Step(false, groupPosition, childPosition + 1, mEdtStepName.getText().toString());
                         e[index].setContent(mEdtStepExam.getText().toString(),mEdtUnit.getText().toString(),mEdtPeople.getText().toString(),mEdtPlace.getText().toString());
+                        index++;
 
                         //插入新步驟後其他item做的調整
-                        for (int i = 0; i < itemCount - 1; i++)
+                        for (int i = 0; i < StepCount ; i++)
                         {
                             if (e[i].getLayer() == groupPosition && e[i].getSequence() >= childPosition + 1)
                             {
                                 e[i].setSequence(1);
                             }
                         }
+                        StepCount++;
+
 
                         //List<Map<String, String>> childList = new ArrayList<>();
                         Map<String, String> child = new HashMap<>();
@@ -296,12 +351,13 @@ public class borrowspace extends ExpandableListActivity
 
                 AlertDialog alert = builder.create();
                 alert.show();
-
                 break;
 
+
+
             case R.id.contextMenuItemAddParallel:
-                final View addParallelStepLayout = LayoutInflater.from(borrowspace.this).inflate(R.layout.add_parallel_step_dialog, null);
-                AlertDialog.Builder builder2 = new AlertDialog.Builder(borrowspace.this);
+                final View addParallelStepLayout = LayoutInflater.from(add_new_one.this).inflate(R.layout.add_parallel_step_dialog, null);
+                AlertDialog.Builder builder2 = new AlertDialog.Builder(add_new_one.this);
                 builder2.setTitle("新增平行步驟");
                 builder2.setView(addParallelStepLayout);
                 builder2.setCancelable(false);
@@ -329,23 +385,27 @@ public class borrowspace extends ExpandableListActivity
                             if (i == 0)
                             {
                                 parentCount ++;
-                                itemCount++;
-                                index++;
+                                StepCount++;
                                 e[index] = new Step(true, groupPosition + 1, i, ParaName[i]);
+                                index++;
                                 insertItem ++;
                             }
                             else if (ParaName[i].length() != 0 && i!=0)
                             {
-                                parentCount ++;
-                                itemCount++;
-                                index++;
+                                //parentCount ++;
+                                StepCount++;
                                 e[index] = new Step(false, groupPosition + 1, i, ParaName[i]);
+                                index++;
                                 insertItem ++;
+                            }
+                            else if (ParaName[i].length() == 0)
+                            {
+                                break;
                             }
                         }
 
                         //加入平行步驟後其他Step類別做的調整
-                        for (int j = 0; j < itemCount-insertItem; j++)
+                        for (int j = 0; j < StepCount - insertItem; j++)
                         {
                             if (e[j].getLayer() >= groupPosition + 1)
                             {
@@ -393,7 +453,7 @@ public class borrowspace extends ExpandableListActivity
                 break;
 
             case R.id.contextMenuItemDelete:
-                AlertDialog.Builder builder3 = new AlertDialog.Builder(borrowspace.this);
+                AlertDialog.Builder builder3 = new AlertDialog.Builder(add_new_one.this);
 
                 //點擊到父層
                 if(childPosition == 0)
@@ -418,7 +478,7 @@ public class borrowspace extends ExpandableListActivity
                         if (childPosition == 0)    //刪除平行步驟
                         {
 
-                            for(int i = 0;i<itemCount ;i++)
+                            for(int i = 0;i<StepCount ;i++)
                             {
                                 if(e[i].getExist())
                                 {
@@ -454,7 +514,7 @@ public class borrowspace extends ExpandableListActivity
                         else                   //刪除一般步驟
                         {
                             //刪除被點擊的步驟
-                            for (int i = 0; i < itemCount; i++)
+                            for (int i = 0; i < StepCount; i++)
                             {
                                 if (e[i].getLayer() == groupPosition && e[i].getSequence() == childPosition)
                                 {
@@ -469,7 +529,7 @@ public class borrowspace extends ExpandableListActivity
                             //刪除步驟後其他步驟做的調整
 
                             //調整如果刪掉的是步驟間的步驟    如果刪掉的是最後一個步驟不用調整
-                            for(int j=0;j<itemCount;j++)
+                            for(int j=0;j<StepCount;j++)
                             {
                                 if(e[j].getLayer() == groupPosition && e[j].getExist() && e[j].getSequence()>childPosition)
                                 {
@@ -500,28 +560,24 @@ public class borrowspace extends ExpandableListActivity
                 break;
 
             case R.id.contextMenuItemEdit:
-                AlertDialog.Builder builder4 = new AlertDialog.Builder(borrowspace.this);
+                AlertDialog.Builder builder4 = new AlertDialog.Builder(add_new_one.this);
                 builder4.setTitle("編輯步驟名稱");
                 builder4.setView(R.layout.edit_step_dialog);
                 builder4.setCancelable(false);
 
                 builder4.setPositiveButton("確定", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id)
-                    {
+                    public void onClick(DialogInterface dialog, int id) {
                         EditText editStepName = (EditText) ((AlertDialog) dialog).findViewById(R.id.editStepName);
                         //Log.v("successful edit step", "新的步驟名稱為:" + editStepName.getText().toString());
 
-                        if(childPosition == 0)
-                        {
-                            Map<String,Object> newEditItem = new HashMap<String, Object>();
-                            newEditItem.put(ITEM_NAME,editStepName.getText().toString());
-                            groupList.set(groupPosition-1,newEditItem);
-                        }
-                        else
-                        {
-                            Map<String,String> newEditSubItem = new HashMap<String, String>();
-                            newEditSubItem.put(ITEM_SUBNAME,editStepName.getText().toString());
-                            childList2D.get(groupPosition-1).set(childPosition-1,newEditSubItem);
+                        if (childPosition == 0) {
+                            Map<String, Object> newEditItem = new HashMap<String, Object>();
+                            newEditItem.put(ITEM_NAME, editStepName.getText().toString());
+                            groupList.set(groupPosition - 1, newEditItem);
+                        } else {
+                            Map<String, String> newEditSubItem = new HashMap<String, String>();
+                            newEditSubItem.put(ITEM_SUBNAME, editStepName.getText().toString());
+                            childList2D.get(groupPosition - 1).set(childPosition - 1, newEditSubItem);
                         }
 
                         //設定Adapter
@@ -556,26 +612,7 @@ public class borrowspace extends ExpandableListActivity
         return super.onContextItemSelected(item);
 
     }
-/*
-    //按下新增步驟dialog中"確定新增"按鈕的處理
-    private View.OnClickListener addDlgBtnOKOnClick = new View.OnClickListener()
-    {
-        public void onClick(View v)
-        {
-            addDlg.cancel();
-        }
-    };
 
-
-    //按下新增步驟dialog中"取消新增"按鈕的處理
-    private View.OnClickListener addDlgBtnCancelOnClick = new View.OnClickListener()
-    {
-        public void onClick(View v)
-        {
-            addDlg.cancel();
-        }
-    };
-*/
 
 
 
@@ -595,6 +632,7 @@ public class borrowspace extends ExpandableListActivity
     {
         getDelegate().setSupportActionBar(toolbar);
     }
+
 
 
     //設定長按父層或子層的監聽事件
@@ -622,19 +660,13 @@ public class borrowspace extends ExpandableListActivity
 
             }
             //Log.v("測試", packedPosition+" ");
-            Log.v("測試"," 長按的组群位置：" + groupPosition);
+            Log.v("測試", " 長按的组群位置：" + groupPosition);
             Log.v("測試", "長按的子項位置:" + childPosition);
             return false;
         }
 
 
     };
-
-
-
-
-
-
 
 
 }

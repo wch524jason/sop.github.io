@@ -10,11 +10,8 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     android:orientation="vertical"
-    tools:context="cc.ncu.edu.tw.sop_v1.ballot"
-    tools:showIn="@layout/activity_ballot">
-
-
-
+    tools:context="cc.ncu.edu.tw.sop_v1.DetailStepActivity"
+    tools:showIn="@layout/activity_detail_step">
 
 
     <TextView
@@ -87,5 +84,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:enabled="false"/>
+
+
+
 
 </LinearLayout>
