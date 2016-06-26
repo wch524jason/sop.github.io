@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/contextMenuItemLook"
+        android:title="查看此步驟"/>
+
     <item android:id="@+id/contextMenuItemAddCommon"
-        android:title="新增一般步驟"/>
+        android:title="新增單一步驟"/>
 
     <item android:id="@+id/contextMenuItemAddParallel"
         android:title="新增平行步驟"/>
@@ -13,7 +16,5 @@
     <item android:id="@+id/contextMenuItemEdit"
         android:title="編輯步驟"/>
 
-    <item android:id="@+id/contextMenuItemCopy"
-        android:title="複製步驟"/>
 
 </menu>

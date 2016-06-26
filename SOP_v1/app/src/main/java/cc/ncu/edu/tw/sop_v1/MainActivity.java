@@ -3,6 +3,7 @@ package cc.ncu.edu.tw.sop_v1;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ListActivity;
+import android.app.SearchManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -27,10 +28,18 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.support.v7.widget.SearchView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
 import com.google.api.client.auth.oauth2.Credential;
@@ -44,6 +53,10 @@ import com.wuman.android.auth.DialogFragmentController;
 import com.wuman.android.auth.OAuthManager;
 import com.wuman.android.auth.oauth2.store.SharedPreferencesCredentialStore;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,17 +67,26 @@ import java.util.Map;
 
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener,ListView.OnItemClickListener{
-    ArrayList<Map<String,Object>> mList = new ArrayList<Map<String,Object>>(); //儲存每個sop project items中的各個物件型態(Image、TextView、三個ImageButton)
+    private ArrayList<Map<String,Object>> mList = new ArrayList<Map<String,Object>>(); //儲存每個sop project items中的各個物件型態(Image、TextView、三個ImageButton)
     private ListView listView;
 
     private Context context;
     private OAuthManager oAuthManager;
     private String ACCESS_TOKEN = "";
-    private String[] sopProject = {"場地借用","費用繳交","宿舍申請","","","","","","",""};
-    private int countProjectNum = 3;
+
+    //private String[] sopProject= new String[100];
+    private Project[] project = new Project[100];
+
+    private int projectNum = 0;
 
     private EditText editText;
     private MainActivity mainActivity;
+
+    RequestQueue mQueue;
+
+    //紀錄點進去專案的Flow_id
+    private int Flow_id;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -96,30 +118,67 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
                     builder.setPositiveButton("確定", new DialogInterface.OnClickListener()
                             {
+                                private String newProjectName;
                                 public void onClick(DialogInterface dialog, int id)
                                 {
 
                                     editText =(EditText) ((AlertDialog) dialog).findViewById(R.id.edtProjectName);
+                                    newProjectName = editText.getText().toString();
                                     if(!editText.getText().toString().equals(""))
                                     {
                                         Map<String,Object> item = new HashMap<String,Object>();
                                         item.put("txtView",editText.getText().toString());
                                         item.put("delete",R.drawable.delete);
                                         item.put("edit",R.drawable.edit);
-                                        item.put("copy",R.drawable.copy);
+                                        item.put("copy", R.drawable.copy);
                                         mList.add(item);
-                                        MyAdapter adapter = new MyAdapter(MainActivity.this,mList,R.layout.sop_list_items,new String[] {"txtView","delete","edit","copy"}, new int[] {R.id.txtView,R.id.delete,R.id.edit,R.id.copy},mainActivity);
+                                        MyAdapter adapter = new MyAdapter(MainActivity.this,mList,R.layout.sop_list_items,new String[] {"txtView","delete","edit","copy"}, new int[] {R.id.txtView,R.id.delete,R.id.edit,R.id.copy},mainActivity,project);
                                         listView.setAdapter(adapter);
                                         Toast.makeText(getApplicationContext(), "新增了專案"+editText.getText().toString(), Toast.LENGTH_SHORT).show();
-                                        countProjectNum+=1;
-                                        sopProject[countProjectNum] +=editText.getText().toString();
+                                        project[projectNum] = new Project(projectNum,0,newProjectName);
+                                        projectNum+=1;
+
                                     }
+
+                                    //post新增的內容到後端
+                                    StringRequest stringRequest = new StringRequest(Request.Method.POST, "http://140.115.3.188:3000/sop/v1/processes/", new Response.Listener<String>() {
+
+                                    @Override
+                                    public void onResponse(String response)
+                                    {
+                                        Log.d("Successful", response);
+                                        //mtextView.append("\n" + response);
+                                    }
+                                    }, new Response.ErrorListener()
+                                    {
+                                        public void onErrorResponse(VolleyError error)
+                                        {
+                                            Log.e("ErrorHappen", error.getMessage(), error);
+                                        }
+                                    })
+                                    {
+                                        public Map<String, String> getHeaders() throws AuthFailureError
+                                        {
+                                            Map<String, String> map = new HashMap<String, String>();
+                                            map.put("Authorization", "Bearer"+" "+ACCESS_TOKEN);
+                                            return map;
+                                        }
+
+                                        public Map<String, String> getParams() throws AuthFailureError {
+                                            Map<String, String> map = new HashMap<String, String>();
+                                            map.put("name", newProjectName);
+                                            return map;
+                                        }
+                                    };
+
+                                    mQueue.add(stringRequest);
 
                                 }
                             }
                     );
 
-                    builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    builder.setNegativeButton("取消", new DialogInterface.OnClickListener()
+                    {
                         public void onClick(DialogInterface dialog, int id)
                         {
 
@@ -129,11 +188,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     AlertDialog alert = builder.create();
                     alert.show();
                 }
-
             }
-
         });
-
 
 
         //DrawerLayout的相關設定
@@ -152,25 +208,70 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         //在sop project items中加入許多物件(Image、TextView、三個ImageButton)
         listView = (ListView)findViewById(R.id.listView);
-        String[] listFromResource =sopProject;
-        for(int i=0;i<listFromResource.length;i++)
+
+        //初始化mQueue
+        mQueue = Volley.newRequestQueue(context);
+
+
+        //從後端取得專案(get)
+        StringRequest apiRequest = new StringRequest("http://140.115.3.188:3000/sop/v1/processes/", new Response.Listener<String>()
         {
-            if(listFromResource[i]!="")
+            @Override
+            public void onResponse(String response)
             {
-                Map<String,Object> item = new HashMap<String,Object>();
-                item.put("txtView",listFromResource[i]);
-                item.put("delete",R.drawable.delete);
-                item.put("edit",R.drawable.edit);
-                item.put("copy",R.drawable.copy);
-                mList.add(item);
+                Log.d("TAG", response);
+
+                try
+                {
+                    JSONArray array = new JSONArray(response);
+
+                    for(int i=0;i<array.length();i++)
+                    {
+                        //初始化project相關的資訊
+                        project[i] = new Project(i,Integer.parseInt(array.getJSONObject(i).getString("id")), array.getJSONObject(i).getString("name"));
+
+                        Map<String,Object> item = new HashMap<>();
+                        item.put("txtView", project[i].getProjectContent());
+                        item.put("delete", R.drawable.delete);
+                        item.put("edit",R.drawable.edit);
+                        item.put("copy",R.drawable.copy);
+                        mList.add(item);
+
+                        projectNum++;
+                    }
+                } catch (JSONException e)
+                {
+                    e.printStackTrace();
+                }
+
+                //用自定義的MyAdapter把上面建立好的選單陣列存入此物件,再顯示
+                MyAdapter adapter = new MyAdapter(MainActivity.this,mList,R.layout.sop_list_items,new String[] {"txtView","delete","edit","copy"}, new int[] {R.id.txtView,R.id.delete,R.id.edit,R.id.copy},mainActivity,project);
+                listView.setAdapter(adapter);
+
             }
+        }, new Response.ErrorListener()
+        {
+            @Override
+            public void onErrorResponse(VolleyError error)
+            {
+                Log.e("TAG", error.getMessage(), error);
+            }
+        })
+        {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError
+            {
+                HashMap<String, String> map = new HashMap<String, String>();
+                map.put("X-Ncu-Api-Token", "e763cac7e011b72f1e5d8668cb661070bd130f2109c920a76ca4adb3e540018fcf69115961abae35b0c23a4d27dd7782acce7b75c9dd066053eb0408cb4575b9");
+                return map;
+            }
+        };
 
-        }
+        mQueue.add(apiRequest);
 
-        //用自定義的MyAdapter把上面建立好的選單陣列存入此物件,再顯示
-        MyAdapter adapter = new MyAdapter(MainActivity.this,mList,R.layout.sop_list_items,new String[] {"txtView","delete","edit","copy"}, new int[] {R.id.txtView,R.id.delete,R.id.edit,R.id.copy},mainActivity);
-        listView.setAdapter(adapter);
+
         listView.setOnItemClickListener(listViewOnItemClick);
+
     }
 
 
@@ -235,6 +336,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     oAuthManager.deleteCredential("user", null, null);
 
                     new AuthTask().execute();
+                    break;
+
+                case R.id.menuItemSearch:
+
+                    Toast.makeText(MainActivity.this,"成功新增了步驟", Toast.LENGTH_LONG).show();
 
                     break;
 
@@ -247,7 +353,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     };
 
 
-    private class AuthTask extends AsyncTask<Void, Void, Void> {
+    private class AuthTask extends AsyncTask<Void, Void, Void>
+    {
         private boolean authSuccess = true;
         private String accessToken=null;
 
@@ -277,42 +384,56 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     //監聽ListView中哪個選項被選到
     private AdapterView.OnItemClickListener listViewOnItemClick = new  AdapterView.OnItemClickListener() {
+        //記錄點到的project id(flow_id)是多少
+
         public void onItemClick(AdapterView parent,View view,int position,long id)
         {
             //產生與專案個數相同的Activity
-            Intent[] it =new Intent[countProjectNum];
+            //Intent[] it =new Intent[countProjectNum];
+            Flow_id = project[position].getProjectId();
 
            switch(position)
            {
-               case 0:
-                   it[0] = new Intent();
-                   it[0].setClass(MainActivity.this, borrowspace.class);
-                   startActivity(it[0]);
-                   break;
-               case 1:
-                   it[1] = new Intent();
-                   it[1].setClass(MainActivity.this, networkfee.class);
-                   startActivity(it[1]);
-                   break;
-               case 2:
-                   it[2] = new Intent();
-                   it[2].setClass(MainActivity.this, dormsign.class);
-                   startActivity(it[2]);
-                   break;
+            /*
+                                 case 0:
+                                it[0] = new Intent();
+                                 it[0].setClass(MainActivity.this, borrowspace.class);
+                                startActivity(it[0]);
+                                break;
 
+                                 case 1:
+                                it[1] = new Intent();
+                                 it[1].setClass(MainActivity.this, networkfee.class);
+                                startActivity(it[1]);
+                                 break;
+
+                                case 2:
+                                it[2] = new Intent();
+                                it[2].setClass(MainActivity.this, dormsign.class);
+                                startActivity(it[2]);
+                                 break;
+                        */
                default:
                    Intent intent = new Intent();
                    intent.setClass(MainActivity.this, add_new_one.class);
+                   Bundle bundle = new Bundle();
+                   bundle.putInt("Flow_id",Flow_id);
+                   bundle.putString("Access_token",ACCESS_TOKEN);
+                   intent.putExtras(bundle);
                    startActivity(intent);
-                   break;
 
+                   break;
            }
+
+
+
         }
     };
 
 
     @Override
-    public void onBackPressed() {
+    public void onBackPressed()
+    {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
@@ -322,9 +443,22 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(Menu menu)
+    {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
+
+        MenuItem menuSearchItem = menu.findItem(R.id.menuItemSearch);
+        SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+        SearchView searchView = (SearchView) menuSearchItem.getActionView();
+
+        searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+
+        // 這邊讓icon可以還原到搜尋的icon
+        searchView.setIconifiedByDefault(true);
+        searchView.setSubmitButtonEnabled(true);
+        searchView.setOnQueryTextListener(queryListener);
+
         return true;
     }
 
@@ -375,6 +509,39 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     {
         return ACCESS_TOKEN;
     }
+
+    //
+    public int getProjectNum()
+    {
+        return projectNum;
+    }
+
+    //在MyAdapter中delete後projectNum減少
+    public void setProjectNum()
+    {
+        projectNum--;
+    }
+
+
+    //實作搜尋widget
+    final private android.support.v7.widget.SearchView.OnQueryTextListener queryListener = new android.support.v7.widget.SearchView.OnQueryTextListener() {
+
+        @Override
+        public boolean onQueryTextChange(String newText)
+        {
+
+            return false;
+        }
+
+        @Override
+        public boolean onQueryTextSubmit(String query) {
+            Toast.makeText(MainActivity.this,"搜尋了"+query,Toast.LENGTH_SHORT).show();
+            return false;
+        }
+    };
+
+
+
 }
 
 

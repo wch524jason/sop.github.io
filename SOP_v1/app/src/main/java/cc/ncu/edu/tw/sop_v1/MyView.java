@@ -7,7 +7,8 @@ import android.widget.TextView;
 /**
  * Created by jason on 2016/4/30.
  */
-public class MyView {
+public class MyView
+{
     public TextView title;
     public ImageButton delete;
     public ImageButton edit;

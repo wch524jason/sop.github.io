@@ -74,12 +74,12 @@ public class borrowspace extends ExpandableListActivity
         setSupportActionbar(toolbar);
 
         //初始化ExpandableListView中的物件
-        e[0] = new Step(true, 1, 0, "登記申請");
-        e[1] = new Step(false, 1, 1, "抽籤");
-        e[2] = new Step(false, 1, 2, "排隊");
-        e[3] = new Step(true, 2, 0, "繳交費用");
-        e[4] = new Step(false, 2, 1, "ATM");
-        e[5] = new Step(true, 3, 0, "場地復原歸還");
+        e[0] = new Step(1, 0, "登記申請",1,1);
+        e[1] = new Step(1, 1, "抽籤",1,2);
+        e[2] = new Step(1, 2, "排隊",1,3);
+        e[3] = new Step( 2, 0, "繳交費用",1,4);
+        e[4] = new Step( 2, 1, "ATM",1,5);
+        e[5] = new Step(3, 0, "場地復原歸還",1,6);
         //e[6] = new Step(false, 3, 1, "123");
         //e[7] = new Step(true,4,0,"234");
 
@@ -108,7 +108,7 @@ public class borrowspace extends ExpandableListActivity
 
                             itemCount++;
                             index++;
-                            e[index] = new Step(true, groupList.size()+1, 0, mEdtStepName.getText().toString());
+                            e[index] = new Step(groupList.size()+1, 0, mEdtStepName.getText().toString(),1,7);
                             e[index].setContent(mEdtStepExam.getText().toString(),mEdtUnit.getText().toString(),mEdtPeople.getText().toString(),mEdtPlace.getText().toString());
 
                             Map<String, Object> group = new HashMap<>();
@@ -268,7 +268,7 @@ public class borrowspace extends ExpandableListActivity
 
                         itemCount++;
                         index++;
-                        e[index] = new Step(false, groupPosition, childPosition + 1, mEdtStepName.getText().toString());
+                        e[index] = new Step(groupPosition, childPosition + 1, mEdtStepName.getText().toString(),1,8);
                         e[index].setContent(mEdtStepExam.getText().toString(),mEdtUnit.getText().toString(),mEdtPeople.getText().toString(),mEdtPlace.getText().toString());
 
                         //插入新步驟後其他item做的調整
@@ -331,7 +331,7 @@ public class borrowspace extends ExpandableListActivity
                                 parentCount ++;
                                 itemCount++;
                                 index++;
-                                e[index] = new Step(true, groupPosition + 1, i, ParaName[i]);
+                                e[index] = new Step(groupPosition + 1, i, ParaName[i],1,9);
                                 insertItem ++;
                             }
                             else if (ParaName[i].length() != 0 && i!=0)
@@ -339,7 +339,7 @@ public class borrowspace extends ExpandableListActivity
                                 parentCount ++;
                                 itemCount++;
                                 index++;
-                                e[index] = new Step(false, groupPosition + 1, i, ParaName[i]);
+                                e[index] = new Step(groupPosition + 1, i, ParaName[i],1,10);
                                 insertItem ++;
                             }
                         }
@@ -420,21 +420,20 @@ public class borrowspace extends ExpandableListActivity
 
                             for(int i = 0;i<itemCount ;i++)
                             {
-                                if(e[i].getExist())
-                                {
+
                                     //刪掉父層
                                     if(e[i].getLayer() == groupPosition && e[i].getSequence() == 0)
                                     {
                                         //Map<String, Object> group = new HashMap<>();
                                         //Map<String,Object> paraIcon = new HashMap<>();
-                                        e[i].setExist();
+
                                         groupList.remove(groupPosition-1);
 
                                     }
                                     //刪掉子層
                                     if(e[i].getLayer() == groupPosition && e[i].getSequence()!=0)
                                     {
-                                        e[i].setExist();
+
                                         childList2D.get(groupPosition - 1).remove(0);
                                         deleteNum ++ ;
                                     }
@@ -444,7 +443,7 @@ public class borrowspace extends ExpandableListActivity
                                     {
                                         e[i].setLayer(-1);
                                     }
-                                }
+
 
                             }
                             //做完後要把空的childList刪除掉
@@ -458,7 +457,6 @@ public class borrowspace extends ExpandableListActivity
                             {
                                 if (e[i].getLayer() == groupPosition && e[i].getSequence() == childPosition)
                                 {
-                                    e[i].setExist();
                                     deletedIndex = i;
                                     break;
                                 }
@@ -471,7 +469,7 @@ public class borrowspace extends ExpandableListActivity
                             //調整如果刪掉的是步驟間的步驟    如果刪掉的是最後一個步驟不用調整
                             for(int j=0;j<itemCount;j++)
                             {
-                                if(e[j].getLayer() == groupPosition && e[j].getExist() && e[j].getSequence()>childPosition)
+                                if(e[j].getLayer() == groupPosition && e[j].getSequence()>childPosition)
                                 {
                                     e[j].setSequence(-1);
                                 }
@@ -546,10 +544,7 @@ public class borrowspace extends ExpandableListActivity
                 alert4.show();
                 break;
 
-            case R.id.contextMenuItemCopy:
 
-
-                break;
 
 
         }

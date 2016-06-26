@@ -1,5 +1,6 @@
 package cc.ncu.edu.tw.sop_v1;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -11,9 +12,11 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
-public class DetailStepActivity extends AppCompatActivity {
-
-    EditText stepExamine,unit,people,place;
+public class DetailStepActivity extends AppCompatActivity
+{
+    private Bundle bundle;
+    private Step step;
+    EditText stepExamine,unit,person,place;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -34,24 +37,33 @@ public class DetailStepActivity extends AppCompatActivity {
         */
         stepExamine = (EditText)findViewById(R.id.editStepExamine);
         unit = (EditText)findViewById(R.id.editUnit);
-        people = (EditText)findViewById(R.id.editPeople);
+        person = (EditText)findViewById(R.id.editPeople);
         place = (EditText)findViewById(R.id.editPlace);
 
+        //取出從add_new_one.java中Intent所附帶的Step資料
+        step = (Step)getIntent().getSerializableExtra("Step");
+        stepExamine.setText(step.getItem());
+        unit.setText(step.getUnit());
+        person.setText(step.getPerson());
+        place.setText(step.getPlace());
 
     }
 
 
-    private Toolbar.OnMenuItemClickListener onMenuItemClick = new Toolbar.OnMenuItemClickListener() {
+    private Toolbar.OnMenuItemClickListener onMenuItemClick = new Toolbar.OnMenuItemClickListener()
+    {
         @Override
-        public boolean onMenuItemClick(MenuItem menuItem) {
+        public boolean onMenuItemClick(MenuItem menuItem)
+        {
             String msg = "";
 
-            switch (menuItem.getItemId()) {
+            switch (menuItem.getItemId())
+            {
                 case R.id.action_edit:
                     msg += "Click edit";
                     stepExamine.setEnabled(true);
                     unit.setEnabled(true);
-                    people.setEnabled(true);
+                    person.setEnabled(true);
                     place.setEnabled(true);
                     break;
 
@@ -59,7 +71,7 @@ public class DetailStepActivity extends AppCompatActivity {
                     msg += "Click upload";
                     stepExamine.setEnabled(false);
                     unit.setEnabled(false);
-                    people.setEnabled(false);
+                    person.setEnabled(false);
                     place.setEnabled(false);
 
                 case R.id.action_settings:
@@ -67,7 +79,8 @@ public class DetailStepActivity extends AppCompatActivity {
                     break;
             }
 
-            if(!msg.equals("")) {
+            if(!msg.equals(""))
+            {
                 Toast.makeText(DetailStepActivity.this, msg, Toast.LENGTH_SHORT).show();
             }
             return true;
@@ -75,11 +88,10 @@ public class DetailStepActivity extends AppCompatActivity {
     };
 
 
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(Menu menu)
+    {
         getMenuInflater().inflate(R.menu.menu_ballot, menu);
         return true;
     }
-
-
 
 }

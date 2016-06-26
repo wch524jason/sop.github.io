@@ -19,6 +19,17 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,7 +37,8 @@ import java.util.Map;
 /**
  * Created by jason on 2016/4/30.
  */
-public class MyAdapter extends BaseAdapter {
+public class MyAdapter extends BaseAdapter
+{
     private ArrayList<Map<String,Object>> mAppList;
     private LayoutInflater mInflater;
     private Context mContext;
@@ -36,13 +48,16 @@ public class MyAdapter extends BaseAdapter {
     private MainActivity mainActivity = new MainActivity();
     private MyAdapter adapter;
 
+    RequestQueue mQueue;
+    //private String ACCESS_TOKEN;
+    private Project[] project = new Project[100];
 
     //編輯專案的元件初始化
     private EditText editProjectName;
 
 
     //建構式
-    public MyAdapter(Context c, ArrayList<Map<String, Object>> appList, int resource, String[] from, int[] to,MainActivity m)
+    public MyAdapter(Context c, ArrayList<Map<String, Object>> appList, int resource, String[] from, int[] to,MainActivity m,Project[] p)
     {
         mContext = c;
         mAppList = appList;
@@ -50,6 +65,11 @@ public class MyAdapter extends BaseAdapter {
         keyString = new String[from.length];
         valueViewID = new int[to.length];
         mainActivity = m;
+        project = p;
+
+
+        mQueue = Volley.newRequestQueue(mContext);
+
         System.arraycopy(from, 0, keyString, 0, from.length);
         System.arraycopy(to, 0, valueViewID, 0, to.length);
     }
@@ -125,6 +145,54 @@ public class MyAdapter extends BaseAdapter {
         public void onClick(View v)
         {
             int vid=v.getId();
+
+            //在每次做刪除、編輯、複製等操作前要先確認所有project 的 在後端中的id
+            StringRequest apiRequest = new StringRequest("http://140.115.3.188:3000/sop/v1/processes/", new Response.Listener<String>()
+            {
+                @Override
+                public void onResponse(String response)
+                {
+                    Log.d("TAG", response);
+
+                    try
+                    {
+                        JSONArray array = new JSONArray(response);
+
+                        for(int i=0;i<array.length();i++)
+                        {
+                            //初始化project相關的資訊
+                            project[i] = new Project(i,Integer.parseInt(array.getJSONObject(i).getString("id")), array.getJSONObject(i).getString("name"));
+                        }
+                    } catch (JSONException e)
+                    {
+                        e.printStackTrace();
+                    }
+                }
+            }, new Response.ErrorListener()
+            {
+                @Override
+                public void onErrorResponse(VolleyError error)
+                {
+                    Log.e("TAG", error.getMessage(), error);
+                }
+            })
+            {
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError
+                {
+                    HashMap<String, String> map = new HashMap<String, String>();
+                    map.put("X-Ncu-Api-Token", "e763cac7e011b72f1e5d8668cb661070bd130f2109c920a76ca4adb3e540018fcf69115961abae35b0c23a4d27dd7782acce7b75c9dd066053eb0408cb4575b9");
+                    return map;
+                }
+            };
+
+            mQueue.add(apiRequest);
+
+
+
+
+
+
             if (vid == myView.delete.getId())
             {
 
@@ -135,7 +203,7 @@ public class MyAdapter extends BaseAdapter {
                 }
                 else
                 {
-                    final String[] listFromResource = mContext.getResources().getStringArray(R.array.sopproject);
+                    //final String[] listFromResource = mContext.getResources().getStringArray(R.array.sopproject);
                     AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
 
                     builder.setMessage("確定要刪除此專案?");
@@ -145,16 +213,43 @@ public class MyAdapter extends BaseAdapter {
                             {
                                 public void onClick(DialogInterface dialog, int id)
                                 {
-                                    adapter = new MyAdapter(mContext,mAppList,R.layout.sop_list_items,new String[] {"txtView","delete","edit","copy"}, new int[] {R.id.txtView,R.id.delete,R.id.edit,R.id.copy},mainActivity);
+                                    adapter = new MyAdapter(mContext, mAppList, R.layout.sop_list_items, new String[]{"txtView", "delete", "edit", "copy"}, new int[]{R.id.txtView, R.id.delete, R.id.edit, R.id.copy}, mainActivity,project);
                                     mAppList.remove(position);
                                     mainActivity.getListView().setAdapter(adapter);
+
+                                    int ID =project[position].getProjectId();
+
+                                    //刪減後project[]做的調整
+                                    //int projectNum = mainActivity.getProjectNum();
+                                    mainActivity.setProjectNum();
+
+                                    //delete後端所做的變更
+                                    StringRequest stringRequest = new StringRequest(Request.Method.DELETE, "http://140.115.3.188:3000/sop/v1/processes/"+String.valueOf(ID), new Response.Listener<String>()
+                                    {
+                                        @Override
+                                        public void onResponse(String response)
+                                        {
+                                            Log.d("Successful", response);
+
+                                        }
+                                    }, new Response.ErrorListener() {
+                                        public void onErrorResponse(VolleyError error) {
+                                            Log.e("ErrorHappen", error.getMessage(), error);
+                                        }
+
+                                    }) {
+                                        public Map<String, String> getHeaders() throws AuthFailureError {
+                                            Map<String, String> map = new HashMap<String, String>();
+                                            map.put("Authorization", "Bearer"+ " " +mainActivity.getACCESS_TOKEN());
+                                            return map;
+                                        }
+                                    };
+
+                                    mQueue.add(stringRequest);
                                 }
                             }
-                    );
-
-                    builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id)
-                        {
+                    ).setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
 
                         }
                     });
@@ -180,6 +275,51 @@ public class MyAdapter extends BaseAdapter {
         public void onClick(View v)
         {
             int vid=v.getId();
+
+            //在每次做刪除、編輯、複製等操作前要先確認所有project 的 在後端中的id
+            StringRequest apiRequest = new StringRequest("http://140.115.3.188:3000/sop/v1/processes/", new Response.Listener<String>()
+            {
+                @Override
+                public void onResponse(String response)
+                {
+                    Log.d("TAG", response);
+
+                    try
+                    {
+                        JSONArray array = new JSONArray(response);
+
+                        for(int i=0;i<array.length();i++)
+                        {
+                            //初始化project相關的資訊
+                            project[i] = new Project(i,Integer.parseInt(array.getJSONObject(i).getString("id")), array.getJSONObject(i).getString("name"));
+                        }
+                    } catch (JSONException e)
+                    {
+                        e.printStackTrace();
+                    }
+                }
+            }, new Response.ErrorListener()
+            {
+                @Override
+                public void onErrorResponse(VolleyError error)
+                {
+                    Log.e("TAG", error.getMessage(), error);
+                }
+            })
+            {
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError
+                {
+                    HashMap<String, String> map = new HashMap<String, String>();
+                    map.put("X-Ncu-Api-Token", "e763cac7e011b72f1e5d8668cb661070bd130f2109c920a76ca4adb3e540018fcf69115961abae35b0c23a4d27dd7782acce7b75c9dd066053eb0408cb4575b9");
+                    return map;
+                }
+            };
+
+            mQueue.add(apiRequest);
+
+
+
             if (vid == myView.edit.getId())
             {
                 if(mainActivity.getACCESS_TOKEN()=="")
@@ -196,21 +336,59 @@ public class MyAdapter extends BaseAdapter {
                     builder.setCancelable(false);
 
                     builder.setPositiveButton("確定", new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
+
+                                public void onClick(DialogInterface dialog, int id)
+                                {
 
                                     editProjectName = (EditText) ((AlertDialog) dialog).findViewById(R.id.edtProjectName);
                                     Map<String,Object> newItem = new HashMap();
 
-                                    Log.v("successful edit project", "新的專案名稱為:" + editProjectName.getText().toString());
+                                    //Log.v("successful edit project", "更改後的專案名稱:" + editProjectName.getText().toString());
 
                                     newItem.put("txtView",editProjectName.getText().toString());
                                     newItem.put("delete",R.drawable.delete);
                                     newItem.put("edit",R.drawable.edit);
                                     newItem.put("copy", R.drawable.copy);
 
-                                    adapter = new MyAdapter(mContext, mAppList, R.layout.sop_list_items, new String[]{"txtView", "delete", "edit", "copy"}, new int[]{R.id.txtView, R.id.delete, R.id.edit, R.id.copy}, mainActivity);
-                                    mAppList.set(position,newItem);
+                                    adapter = new MyAdapter(mContext, mAppList, R.layout.sop_list_items, new String[]{"txtView", "delete", "edit", "copy"}, new int[]{R.id.txtView, R.id.delete, R.id.edit, R.id.copy}, mainActivity,project);
+                                    mAppList.set(position, newItem);
                                     mainActivity.getListView().setAdapter(adapter);
+
+                                    int ID =project[position].getProjectId();
+                                    project[position].setContent(editProjectName.getText().toString());
+
+                                    //編輯專案名稱後,後端坐的處理
+                                    StringRequest stringRequest = new StringRequest(Request.Method.PUT, "http://140.115.3.188:3000/sop/v1/processes/"+String.valueOf(ID), new Response.Listener<String>()
+                                    {
+                                        @Override
+                                        public void onResponse(String response)
+                                        {
+                                            Log.d("Successful", response);
+
+                                        }
+                                    }, new Response.ErrorListener(){
+                                        public void onErrorResponse(VolleyError error) {
+                                            Log.e("ErrorHappen", error.getMessage(), error);
+                                        }
+
+                                    })
+                                    { public Map<String, String> getHeaders() throws AuthFailureError
+                                        {
+                                            Map<String, String> map = new HashMap<String, String>();
+                                            map.put("Authorization", "Bearer"+" "+mainActivity.getACCESS_TOKEN());
+                                            return map;
+                                        }
+
+
+                                        public Map<String, String> getParams() throws AuthFailureError {
+                                            Map<String, String> map = new HashMap<String, String>();
+                                            map.put("name", editProjectName.getText().toString());
+                                            return map;
+                                        }
+                                    };
+                                    mQueue.add(stringRequest);
+
+
                                 }
                             }
                     );
@@ -240,8 +418,52 @@ public class MyAdapter extends BaseAdapter {
         }
 
         @Override
-        public void onClick(View v) {
+        public void onClick(View v)
+        {
             int vid=v.getId();
+
+            //在每次做刪除、編輯、複製等操作前要先確認所有project 的 在後端中的id
+            StringRequest apiRequest = new StringRequest("http://140.115.3.188:3000/sop/v1/processes/", new Response.Listener<String>()
+            {
+                @Override
+                public void onResponse(String response)
+                {
+                    Log.d("TAG", response);
+
+                    try
+                    {
+                        JSONArray array = new JSONArray(response);
+
+                        for(int i=0;i<array.length();i++)
+                        {
+                            //初始化project相關的資訊
+                            project[i] = new Project(i,Integer.parseInt(array.getJSONObject(i).getString("id")), array.getJSONObject(i).getString("name"));
+                        }
+                    } catch (JSONException e)
+                    {
+                        e.printStackTrace();
+                    }
+                }
+            }, new Response.ErrorListener()
+            {
+                @Override
+                public void onErrorResponse(VolleyError error)
+                {
+                    Log.e("TAG", error.getMessage(), error);
+                }
+            })
+            {
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError
+                {
+                    HashMap<String, String> map = new HashMap<String, String>();
+                    map.put("X-Ncu-Api-Token", "e763cac7e011b72f1e5d8668cb661070bd130f2109c920a76ca4adb3e540018fcf69115961abae35b0c23a4d27dd7782acce7b75c9dd066053eb0408cb4575b9");
+                    return map;
+                }
+            };
+
+            mQueue.add(apiRequest);
+
             if (vid == myView.cpy.getId())
             {
                 //Log.v("copy happened", "you click copy button");
