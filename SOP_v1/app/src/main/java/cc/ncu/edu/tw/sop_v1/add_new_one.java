@@ -184,8 +184,8 @@ public class add_new_one extends ExpandableListActivity
     {
         return bundle;
     }
-*/
 
+*/
 /*
     protected void onSaveInstanceState(Bundle outState)
     {
@@ -202,9 +202,9 @@ public class add_new_one extends ExpandableListActivity
 
         Log.v("onSaveInstanceState被執行了","成功了~~~");
     }
-*/
+    */
 
-/*
+    /*
     protected void onRestoreInstanceState(Bundle savedInstanceState)
     {
         super.onRestoreInstanceState(savedInstanceState);
@@ -236,8 +236,8 @@ public class add_new_one extends ExpandableListActivity
         ArrayList bundlegrouplist = savedInstanceState.getParcelableArrayList("GROUPLIST");
         ArrayList bundlechildList2D = savedInstanceState.getParcelableArrayList("CHILDLIST2D");
 
-        groupList= (List<Map<String, Object>>)bundlegrouplist;
-        childList2D =(List<List<Map<String,String>>>)bundlechildList2D;
+        List<Map<String, Object>> groupList= (List<Map<String, Object>>)bundlegrouplist;
+        List<List<Map<String,String>>> childList2D =(List<List<Map<String,String>>>)bundlechildList2D;
 
 
         //設定ExpandableListAdapter

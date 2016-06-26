@@ -3,7 +3,6 @@ package cc.ncu.edu.tw.sop_v1;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ListActivity;
-import android.app.SearchManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -28,12 +27,10 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.support.v7.widget.SearchView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.RequestQueue;
 import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
 import com.google.api.client.auth.oauth2.Credential;
@@ -64,15 +61,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private OAuthManager oAuthManager;
     private String ACCESS_TOKEN = "";
     private String[] sopProject = {"場地借用","費用繳交","宿舍申請","","","","","","",""};
-    //private String[] sopProject= new String[100];
     private int countProjectNum = 3;
 
     private EditText editText;
     private MainActivity mainActivity;
-
-
-    private RequestQueue mQueue;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -160,8 +152,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         //在sop project items中加入許多物件(Image、TextView、三個ImageButton)
         listView = (ListView)findViewById(R.id.listView);
-
-
         String[] listFromResource =sopProject;
         for(int i=0;i<listFromResource.length;i++)
         {
@@ -181,11 +171,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         MyAdapter adapter = new MyAdapter(MainActivity.this,mList,R.layout.sop_list_items,new String[] {"txtView","delete","edit","copy"}, new int[] {R.id.txtView,R.id.delete,R.id.edit,R.id.copy},mainActivity);
         listView.setAdapter(adapter);
         listView.setOnItemClickListener(listViewOnItemClick);
-
-
-
-        //設定搜尋得監聽器
-
     }
 
 
@@ -250,11 +235,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     oAuthManager.deleteCredential("user", null, null);
 
                     new AuthTask().execute();
-                    break;
-
-                case R.id.menuItemSearch:
-
-                    Toast.makeText(MainActivity.this,"成功新增了步驟", Toast.LENGTH_LONG).show();
 
                     break;
 
@@ -342,22 +322,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu)
-    {
+    public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
-
-        MenuItem menuSearchItem = menu.findItem(R.id.menuItemSearch);
-        SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-        SearchView searchView = (SearchView) menuSearchItem.getActionView();
-
-        searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
-
-        // 這邊讓icon可以還原到搜尋的icon
-        searchView.setIconifiedByDefault(true);
-        searchView.setSubmitButtonEnabled(true);
-        searchView.setOnQueryTextListener(queryListener);
-
         return true;
     }
 
@@ -408,28 +375,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     {
         return ACCESS_TOKEN;
     }
-
-
-
-    //實作搜尋widget
-    final private android.support.v7.widget.SearchView.OnQueryTextListener queryListener = new android.support.v7.widget.SearchView.OnQueryTextListener() {
-
-        @Override
-        public boolean onQueryTextChange(String newText)
-        {
-
-            return false;
-        }
-
-        @Override
-        public boolean onQueryTextSubmit(String query) {
-            Toast.makeText(MainActivity.this,"搜尋了"+query,Toast.LENGTH_SHORT).show();
-            return false;
-        }
-    };
-
-
-
 }
 
 
