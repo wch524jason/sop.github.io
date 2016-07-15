@@ -12,6 +12,9 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
+import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,6 +26,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.webkit.CookieManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -58,6 +62,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -67,25 +72,33 @@ import java.util.Map;
 
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener,ListView.OnItemClickListener{
-    private ArrayList<Map<String,Object>> mList = new ArrayList<Map<String,Object>>(); //儲存每個sop project items中的各個物件型態(Image、TextView、三個ImageButton)
+    private ArrayList<Map<String,Object>> mList = new ArrayList<Map<String,Object>>(); //儲存每個sop project items中的各個物件型態(TextView、三個ImageButton)
+    private CookieManager cookieManager;
+
+
     private ListView listView;
+    //private SearchView searchView;
+    private MyAdapter adapter;
 
     private Context context;
     private OAuthManager oAuthManager;
     private String ACCESS_TOKEN = "";
 
-    //private String[] sopProject= new String[100];
+
     private Project[] project = new Project[100];
 
     private int projectNum = 0;
 
     private EditText editText;
+    private EditText searchEdt;
+
     private MainActivity mainActivity;
 
     RequestQueue mQueue;
 
     //紀錄點進去專案的Flow_id
     private int Flow_id;
+    private boolean searchFlag=false;
 
 
     @Override
@@ -96,6 +109,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         toolbar.setOnMenuItemClickListener(onMenuItemClick);
+
+        cookieManager = CookieManager.getInstance();
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener()
@@ -132,11 +147,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                         item.put("edit",R.drawable.edit);
                                         item.put("copy", R.drawable.copy);
                                         mList.add(item);
-                                        MyAdapter adapter = new MyAdapter(MainActivity.this,mList,R.layout.sop_list_items,new String[] {"txtView","delete","edit","copy"}, new int[] {R.id.txtView,R.id.delete,R.id.edit,R.id.copy},mainActivity,project);
+                                        adapter = new MyAdapter(MainActivity.this,mList,R.layout.sop_list_items,new String[] {"txtView","delete","edit","copy"}, new int[] {R.id.txtView,R.id.delete,R.id.edit,R.id.copy},mainActivity,project);
                                         listView.setAdapter(adapter);
                                         Toast.makeText(getApplicationContext(), "新增了專案"+editText.getText().toString(), Toast.LENGTH_SHORT).show();
                                         project[projectNum] = new Project(projectNum,0,newProjectName);
-                                        projectNum+=1;
+
 
                                     }
 
@@ -146,8 +161,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                     @Override
                                     public void onResponse(String response)
                                     {
-                                        Log.d("Successful", response);
-                                        //mtextView.append("\n" + response);
+                                        try
+                                        {
+                                            Log.d("Successful", response);
+                                            JSONObject object = new JSONObject(response);
+                                            project[projectNum].setProjectId(Integer.parseInt(object.getString("id")));
+                                            projectNum+=1;
+                                        }
+                                        catch(JSONException e)
+                                        {
+                                            e.printStackTrace();
+                                        }
+
+
                                     }
                                     }, new Response.ErrorListener()
                                     {
@@ -172,6 +198,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                     };
 
                                     mQueue.add(stringRequest);
+
+
 
                                 }
                             }
@@ -208,6 +236,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         //在sop project items中加入許多物件(Image、TextView、三個ImageButton)
         listView = (ListView)findViewById(R.id.listView);
+        listView.setTextFilterEnabled(true);
+        searchEdt = (EditText) findViewById(R.id.search_box);
 
         //初始化mQueue
         mQueue = Volley.newRequestQueue(context);
@@ -234,9 +264,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         item.put("txtView", project[i].getProjectContent());
                         item.put("delete", R.drawable.delete);
                         item.put("edit",R.drawable.edit);
-                        item.put("copy",R.drawable.copy);
+                        item.put("copy", R.drawable.copy);
                         mList.add(item);
 
+                        //project_list.add(project[i]);
                         projectNum++;
                     }
                 } catch (JSONException e)
@@ -245,7 +276,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 }
 
                 //用自定義的MyAdapter把上面建立好的選單陣列存入此物件,再顯示
-                MyAdapter adapter = new MyAdapter(MainActivity.this,mList,R.layout.sop_list_items,new String[] {"txtView","delete","edit","copy"}, new int[] {R.id.txtView,R.id.delete,R.id.edit,R.id.copy},mainActivity,project);
+                adapter = new MyAdapter(MainActivity.this,mList,R.layout.sop_list_items,new String[] {"txtView","delete","edit","copy"}, new int[] {R.id.txtView,R.id.delete,R.id.edit,R.id.copy},mainActivity,project);
                 listView.setAdapter(adapter);
 
             }
@@ -270,7 +301,25 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         mQueue.add(apiRequest);
 
 
+
+
         listView.setOnItemClickListener(listViewOnItemClick);
+
+        searchEdt.addTextChangedListener(new TextWatcher(){
+            @Override
+            public void onTextChanged( CharSequence arg0, int arg1, int arg2, int arg3){}
+
+            @Override
+            public void beforeTextChanged(CharSequence arg0, int arg1, int arg2, int arg3){}
+
+            @Override
+            public void afterTextChanged(Editable arg0)
+            {
+                MainActivity.this.adapter.getFilter().filter(arg0);
+                searchFlag =true;
+                Log.v("afterTextChanged","there is text change");
+            }
+        });
 
     }
 
@@ -337,13 +386,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
                     new AuthTask().execute();
                     break;
-
+/*
                 case R.id.menuItemSearch:
 
                     Toast.makeText(MainActivity.this,"成功新增了步驟", Toast.LENGTH_LONG).show();
 
                     break;
-
+*/
                 case R.id.action_settings:
                     msg += "Click setting";
                     break;
@@ -360,7 +409,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         @Override
         protected Void doInBackground(Void... params) {
-            try {
+            cookieManager.setCookie("portal.ncu.edu.tw", "JSESSIONID=");
+            try
+            {
                 //Credential:存放密碼的密碼庫(放access token)
                 //每次使用authorizeExplicitly時會自動檢查access token有沒有過期
                 Credential authResult = oAuthManager.authorizeExplicitly("user",null,null).getResult();
@@ -388,31 +439,28 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         public void onItemClick(AdapterView parent,View view,int position,long id)
         {
+            ArrayList<Map<String,Object>> list;
             //產生與專案個數相同的Activity
-            //Intent[] it =new Intent[countProjectNum];
-            Flow_id = project[position].getProjectId();
+            if(!searchFlag)
+            {
+                Flow_id = project[position].getProjectId();
+            }
+            else
+            {
+                list = MainActivity.this.adapter.getAfterFilterList();
+                for(int i=0;i<projectNum;i++)
+                {
+                    if(list.get(position).get("txtView").toString().equals(project[i].getProjectContent()))
+                    {
+                        Flow_id = project[i].getProjectId();
+                        break;
+                    }
+                }
+            }
+
 
            switch(position)
            {
-            /*
-                                 case 0:
-                                it[0] = new Intent();
-                                 it[0].setClass(MainActivity.this, borrowspace.class);
-                                startActivity(it[0]);
-                                break;
-
-                                 case 1:
-                                it[1] = new Intent();
-                                 it[1].setClass(MainActivity.this, networkfee.class);
-                                startActivity(it[1]);
-                                 break;
-
-                                case 2:
-                                it[2] = new Intent();
-                                it[2].setClass(MainActivity.this, dormsign.class);
-                                startActivity(it[2]);
-                                 break;
-                        */
                default:
                    Intent intent = new Intent();
                    intent.setClass(MainActivity.this, add_new_one.class);
@@ -447,17 +495,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
-
+/*
         MenuItem menuSearchItem = menu.findItem(R.id.menuItemSearch);
         SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-        SearchView searchView = (SearchView) menuSearchItem.getActionView();
+        searchView = (SearchView) menuSearchItem.getActionView();
 
         searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
 
         // 這邊讓icon可以還原到搜尋的icon
         searchView.setIconifiedByDefault(true);
         searchView.setSubmitButtonEnabled(true);
-        searchView.setOnQueryTextListener(queryListener);
+        searchView.setQueryHint("請輸入專案名稱");
+        //searchView.setOnQueryTextListener(queryListener);
+*/
 
         return true;
     }
@@ -480,11 +530,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     @SuppressWarnings("StatementWithEmptyBody")
 
     //Navigation Item被點擊的監聽器
-    public boolean onNavigationItemSelected(MenuItem item) {
+    public boolean onNavigationItemSelected(MenuItem item)
+    {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_manage)
+        if (id == R.id.nav_logout)
         {
 
         }
@@ -522,23 +573,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         projectNum--;
     }
 
-
-    //實作搜尋widget
-    final private android.support.v7.widget.SearchView.OnQueryTextListener queryListener = new android.support.v7.widget.SearchView.OnQueryTextListener() {
-
-        @Override
-        public boolean onQueryTextChange(String newText)
-        {
-
-            return false;
-        }
-
-        @Override
-        public boolean onQueryTextSubmit(String query) {
-            Toast.makeText(MainActivity.this,"搜尋了"+query,Toast.LENGTH_SHORT).show();
-            return false;
-        }
-    };
 
 
 

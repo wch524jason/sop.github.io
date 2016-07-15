@@ -43,11 +43,12 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true" />
 
-    <EditText
-        android:id="@+id/editUnit"
-        android:layout_width="match_parent"
+    <Spinner
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:enabled="false"/>
+        android:id="@+id/units_spinner"/>
+
+
 
     <TextView
         android:layout_width="wrap_content"
@@ -79,11 +80,10 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true" />
 
-    <EditText
-        android:id="@+id/editPlace"
-        android:layout_width="match_parent"
+    <Spinner
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:enabled="false"/>
+        android:id="@+id/places_spinner"/>
 
 
 

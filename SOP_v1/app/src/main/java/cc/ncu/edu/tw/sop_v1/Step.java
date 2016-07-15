@@ -14,7 +14,8 @@ public class Step implements Serializable
     private String content;
     private int belong;     //所屬的project id
     private int id;         //該步驟在後端的id
-    public int order;     // step在childList2D中的順序
+
+    private boolean exist;
 /*=================================================================*/
     //存放步驟內容的資料
     private String item;
@@ -31,6 +32,7 @@ public class Step implements Serializable
         content = c;
         belong =b;
         id = i;
+        exist = true;
     }
 
     public int getSequence() {return sequence;}
@@ -40,9 +42,9 @@ public class Step implements Serializable
     public void setLayer(int j){layer+=j;}
 
     public String getContent() {return content;}
-    public void setContent(String examine,String unit,String person,String place)
+    public void setContent(String item,String unit,String person,String place)
     {
-        item = examine;
+        this.item = item;
         this.unit = unit;
         this.person = person;
         this.place = place;
@@ -54,8 +56,13 @@ public class Step implements Serializable
     public void setId(int i){id=i;}
 
     public String getItem(){return item;}
+    public void setItem(String s){item=s;}
+
     public String getUnit(){return unit;}
     public String getPerson(){return person;}
     public String getPlace(){return place;}
+
+    public boolean getExist(){return exist;}
+    public void setExist(){exist=false;}
 
 }

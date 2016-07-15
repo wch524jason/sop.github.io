@@ -6,12 +6,6 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="步驟名稱:"/>
-
-    <EditText
-        android:id="@+id/edtStepName"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
-
+        android:text="確定要複製此步驟?"
+        android:id="@+id/textView" />
 </LinearLayout>

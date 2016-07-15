@@ -18,5 +18,6 @@ public class Project
 
     public String getProjectContent(){return content;}
     public int getProjectId(){return id;}
+    public void setProjectId(int pid){id =pid;}
     public void setContent(String s ){content = s;}
 }

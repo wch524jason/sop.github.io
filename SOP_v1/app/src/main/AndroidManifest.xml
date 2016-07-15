@@ -21,10 +21,6 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".borrowspace"
-            android:label="@string/title_activity_borrowspace"
-            android:theme="@style/AppTheme.NoActionBar" />
-        <activity
             android:name=".networkfee"
             android:label="@string/title_activity_networkfee"
             android:theme="@style/AppTheme.NoActionBar" />
